@@ -1,201 +1,133 @@
 from dash import html, dcc
 from src.eda_plots import (
-    plot_overall_trend,
+    df,
+    plot_national_trend,
+    plot_income_trend,
     plot_age_groups,
     plot_race_groups,
-    plot_income_over_time,
+    plot_income_groups,
     plot_employment_groups,
-    plot_mental_health,
-    plot_disparity_heatmap,
-    plot_faceted_trends,
-    plot_state_disparities,
-    plot_outliers,
+    plot_mental_health_scatter,
+    plot_prevalence_vs_disparity,
+    plot_employment_boxplot,
+    plot_disparity_histogram
 )
-from src.model import get_dropdown_options
-
-options = get_dropdown_options()
 
 
 def create_layout():
     return html.Div(
+        style={"padding": "20px"},
         children=[
+            html.H1("Adult Tobacco Consumption Dashboard"),
+            html.Hr(),
 
-            html.H1(
-                "Adult Tobacco Consumption Dashboard",
-                style={"textAlign": "center", "padding": "20px"},
+            # ===================================
+            # EDA VISUALIZATIONS
+            # ===================================
+            html.H2("1. National Smoking Trend Over Time"),
+            html.P("Shows the national decline in smoking prevalence from 2000 to 2023."),
+            dcc.Graph(figure=plot_national_trend()),
+
+            html.H2("2. Smoking Trend by Income Group"),
+            html.P("Lower-income groups consistently have higher smoking prevalence."),
+            dcc.Graph(figure=plot_income_trend()),
+
+            html.Hr(),
+
+            html.H2("3. Smoking by Age Group"),
+            html.P("Younger adults (18–24) show the highest smoking prevalence."),
+            dcc.Graph(figure=plot_age_groups()),
+
+            html.H2("4. Smoking by Race/Ethnicity"),
+            html.P("American Indian/Alaska Native groups show the highest smoking prevalence."),
+            dcc.Graph(figure=plot_race_groups()),
+
+            html.H2("5. Smoking by Income Group"),
+            html.P("Clear socioeconomic gradient: lower income groups smoke more."),
+            dcc.Graph(figure=plot_income_groups()),
+
+            html.H2("6. Smoking by Employment Status"),
+            html.P("Unemployed individuals show higher smoking prevalence."),
+            dcc.Graph(figure=plot_employment_groups()),
+
+            html.Hr(),
+
+            html.H2("7. Mental Health vs Smoking Prevalence"),
+            html.P("Individuals with psychological distress show higher smoking rates."),
+            dcc.Graph(figure=plot_mental_health_scatter()),
+
+            html.H2("8. Smoking Prevalence vs Disparity Value"),
+            html.P("Higher smoking prevalence often corresponds with higher disparities."),
+            dcc.Graph(figure=plot_prevalence_vs_disparity()),
+
+            html.Hr(),
+
+            html.H2("9. Smoking Distribution by Employment Status"),
+            html.P("Unemployed groups show greater variability in smoking prevalence."),
+            dcc.Graph(figure=plot_employment_boxplot()),
+
+            html.H2("10. Distribution of Disparity Values"),
+            html.P("Most disparities cluster near zero with spikes for vulnerable groups."),
+            dcc.Graph(figure=plot_disparity_histogram()),
+
+            html.Hr(),
+
+            # ===================================
+            # PREDICTION UI
+            # ===================================
+            html.H2("Predict Smoking Prevalence"),
+            html.P("Use the model below to estimate smoking prevalence for a demographic group."),
+
+            html.Label("Select Year:"),
+            dcc.Dropdown(
+                id="input_year",
+                options=[{"label": str(year), "value": year} for year in sorted(df["year"].unique())],
+                value=2023,
+                clearable=False
             ),
 
-            html.H2(
-                "Exploratory Data Analysis",
-                style={"marginTop": "20px", "borderBottom": "2px solid #ccc"},
+            html.Br(),
+
+            html.Label("Select State:"),
+            dcc.Dropdown(
+                id="input_state",
+                options=[{"label": s, "value": s} for s in sorted(df["state"].unique())],
+                value="United States",
+                clearable=False
             ),
 
-            # Plot 1
-            html.Div(
-                [
-                    html.H3("1. Overall Smoking Trend Over Time"),
-                    dcc.Graph(figure=plot_overall_trend()),
-                ],
-                style={"marginBottom": "40px"},
+            html.Br(),
+
+            html.Label("Select Demographic Type:"),
+            dcc.Dropdown(
+                id="input_demo_type",
+                options=[{"label": t.capitalize(), "value": t} for t in sorted(df["demographic_type"].unique())],
+                value="age",
+                clearable=False
             ),
 
-            # Plot 2
-            html.Div(
-                [
-                    html.H3("2. Smoking Prevalence by Age Group"),
-                    dcc.Graph(figure=plot_age_groups()),
-                ],
-                style={"marginBottom": "40px"},
+            html.Br(),
+
+            html.Label("Select Demographic Group:"),
+            dcc.Dropdown(
+                id="input_group",
+                placeholder="Loading demographic groups...",
+                clearable=False
             ),
 
-            # Plot 3
-            html.Div(
-                [
-                    html.H3("3. Smoking Prevalence by Race & Ethnicity"),
-                    dcc.Graph(figure=plot_race_groups()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
+            html.Br(),
 
-            # Plot 4
-            html.Div(
-                [
-                    html.H3("4. Income Level Trends Over Time"),
-                    dcc.Graph(figure=plot_income_over_time()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
+            html.Button("Predict", id="predict_button", n_clicks=0),
 
-            # Plot 5
-            html.Div(
-                [
-                    html.H3("5. Smoking Rate Distribution by Employment Status"),
-                    dcc.Graph(figure=plot_employment_groups()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # Plot 6
-            html.Div(
-                [
-                    html.H3("6. Mental Health & Smoking Relationship"),
-                    dcc.Graph(figure=plot_mental_health()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # Plot 7
-            html.Div(
-                [
-                    html.H3("7. Disparity Heatmap Across Demographic Types"),
-                    dcc.Graph(figure=plot_disparity_heatmap()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # Plot 8
-            html.Div(
-                [
-                    html.H3("8. Faceted Trends by Demographic Type"),
-                    dcc.Graph(figure=plot_faceted_trends()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # Plot 9
-            html.Div(
-                [
-                    html.H3("9. State-Level Disparity Value Distribution"),
-                    dcc.Graph(figure=plot_state_disparities()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # Plot 10
-            html.Div(
-                [
-                    html.H3("10. Outlier Analysis: Prevalence vs Disparity"),
-                    dcc.Graph(figure=plot_outliers()),
-                ],
-                style={"marginBottom": "40px"},
-            ),
-
-            # ------------------------------------------------------------------
-            # ML Prediction Section
-            # ------------------------------------------------------------------
-            html.H2(
-                "Machine Learning Prediction",
-                style={
-                    "marginTop": "50px",
-                    "borderTop": "2px solid #ccc",
-                    "paddingTop": "20px",
-                },
-            ),
-
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Label("Year"),
-                            dcc.Dropdown(
-                                id="input_year",
-                                options=[{"label": y, "value": int(y)} for y in options["years"]],
-                                placeholder="Select year",
-                            ),
-                        ],
-                        style={"width": "24%", "display": "inline-block", "paddingRight": "10px"},
-                    ),
-                    html.Div(
-                        [
-                            html.Label("State"),
-                            dcc.Dropdown(
-                                id="input_state",
-                                options=[{"label": s, "value": s} for s in options["states"]],
-                                placeholder="Select state",
-                            ),
-                        ],
-                        style={"width": "24%", "display": "inline-block", "paddingRight": "10px"},
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Demographic Type"),
-                            dcc.Dropdown(
-                                id="input_demographic_type",
-                                options=[
-                                    {"label": d, "value": d}
-                                    for d in options["demographic_types"]
-                                ],
-                                placeholder="Select demographic type",
-                            ),
-                        ],
-                        style={"width": "24%", "display": "inline-block", "paddingRight": "10px"},
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Focus Group"),
-                            dcc.Dropdown(
-                                id="input_group",
-                                options=[{"label": g, "value": g} for g in options["groups"]],
-                                placeholder="Select focus group",
-                            ),
-                        ],
-                        style={"width": "24%", "display": "inline-block"},
-                    ),
-                ],
-                style={"marginBottom": "20px"},
-            ),
-
-            html.Button("Predict Smoking Prevalence", id="predict_button", n_clicks=0),
+            html.Br(),
+            html.Br(),
 
             html.Div(
                 id="prediction_output",
-                style={
-                    "marginTop": "20px",
-                    "fontSize": "18px",
-                    "fontWeight": "bold",
-                },
+                style={"fontSize": "20px", "fontWeight": "bold"}
             ),
 
-        ],
-        style={"width": "80%", "margin": "auto", "paddingBottom": "50px"},
+            html.Br(),
+            html.Hr(),
+        ]
     )
